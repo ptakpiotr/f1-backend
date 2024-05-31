@@ -1,28 +1,33 @@
 package zti.f1backend.controllers;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import zti.f1backend.data.UserRepository;
 import zti.f1backend.models.GeneralizedResponse;
 import zti.f1backend.models.User;
 import zti.f1backend.models.dto.LoginDTO;
 import zti.f1backend.models.dto.UserDTO;
+import zti.f1backend.services.UserService;
 import zti.f1backend.util.JwtUtils;
+import zti.f1backend.util.PasswordEncoder;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final UserRepository userRepository;
-    private final Argon2PasswordEncoder encoder;
+    private final UserService userService;
+    private final PasswordEncoder encoder;
 
-    public AuthController(UserRepository userRepository) {
-        this.encoder = new Argon2PasswordEncoder(5, 32, 1, 2, 1);
+    public AuthController(UserRepository userRepository, UserService userService, @Qualifier("passwordEncoder") PasswordEncoder encoder) {
         this.userRepository = userRepository;
+        this.userService = userService;
+        this.encoder = encoder;
     }
 
     @PostMapping("login")
@@ -32,12 +37,14 @@ public class AuthController {
         if (user == null) {
             return new ResponseEntity<>(new GeneralizedResponse("User cannot be retrieved"), HttpStatus.BAD_REQUEST);
         }
-        String result = encoder.encode(login.getPassword());
-        if (!result.equals(user.getPasswordHash())) {
+        String loginPass = login.getPassword();
+        String savedPass = user.getPasswordHash();
+
+        if (!encoder.matches(loginPass, savedPass)) {
             return new ResponseEntity<>(new GeneralizedResponse("User cannot be retrieved"), HttpStatus.BAD_REQUEST);
         }
 
-        String token = JwtUtils.generateToken(user.getEmail());
+        String token = userService.login(login);
 
         return new ResponseEntity<>(new GeneralizedResponse(token), HttpStatus.CREATED);
     }
