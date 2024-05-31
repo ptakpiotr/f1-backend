@@ -5,7 +5,11 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import zti.f1backend.data.UserRepository;
 import zti.f1backend.models.GeneralizedResponse;
@@ -24,7 +28,8 @@ public class AuthController {
     private final UserService userService;
     private final PasswordEncoder encoder;
 
-    public AuthController(UserRepository userRepository, UserService userService, @Qualifier("passwordEncoder") PasswordEncoder encoder) {
+    public AuthController(UserRepository userRepository, UserService userService,
+            @Qualifier("passwordEncoder") PasswordEncoder encoder) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.encoder = encoder;
@@ -71,5 +76,21 @@ public class AuthController {
         String token = JwtUtils.generateToken(newUser.getEmail());
 
         return new ResponseEntity<>(new GeneralizedResponse(token), HttpStatus.CREATED);
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<HttpStatusCode> delete() {
+        try {
+            SecurityContext context = SecurityContextHolder.getContext();
+            UserDetails userDetails = (UserDetails) context.getAuthentication().getPrincipal();
+            
+            User user = userRepository.findByEmail(userDetails.getUsername());
+
+            userRepository.deleteById(user.getId());
+        } catch (Exception ex) {
+
+        }
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
