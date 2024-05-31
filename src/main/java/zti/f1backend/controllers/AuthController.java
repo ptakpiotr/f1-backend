@@ -3,7 +3,6 @@ package zti.f1backend.controllers;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -51,7 +50,7 @@ public class AuthController {
 
         String token = userService.login(login);
 
-        return new ResponseEntity<>(new GeneralizedResponse(token), HttpStatus.CREATED);
+        return new ResponseEntity<>(new GeneralizedResponse(token), HttpStatus.OK);
     }
 
     @PostMapping("register")
@@ -83,7 +82,7 @@ public class AuthController {
         try {
             SecurityContext context = SecurityContextHolder.getContext();
             UserDetails userDetails = (UserDetails) context.getAuthentication().getPrincipal();
-            
+
             User user = userRepository.findByEmail(userDetails.getUsername());
 
             userRepository.deleteById(user.getId());
