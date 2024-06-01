@@ -29,7 +29,7 @@ public class UserService {
                         loginDto.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         final var user = userRepository.findByEmail(loginDto.getEmail());
-        return JwtUtils.generateToken(user.getEmail());
+        return JwtUtils.generateToken(user.getEmail(), user.getId());
     }
 
     public User getUser() {

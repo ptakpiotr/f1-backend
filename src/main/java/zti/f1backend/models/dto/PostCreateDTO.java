@@ -20,6 +20,5 @@ public class PostCreateDTO {
     @Length(max = 255)
     private String title;
 
-    @NotBlank
     private int userId;
 }

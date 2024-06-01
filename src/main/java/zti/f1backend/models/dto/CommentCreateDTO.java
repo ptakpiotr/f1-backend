@@ -16,6 +16,5 @@ public class CommentCreateDTO {
     @NotBlank
     private String raceId;
 
-    @NotBlank
     private int userId;
 }

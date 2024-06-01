@@ -72,7 +72,7 @@ public class AuthController {
         newUser.setPasswordHash(result);
 
         userRepository.save(newUser);
-        String token = JwtUtils.generateToken(newUser.getEmail());
+        String token = JwtUtils.generateToken(newUser.getEmail(), newUser.getId());
 
         return new ResponseEntity<>(new GeneralizedResponse(token), HttpStatus.CREATED);
     }

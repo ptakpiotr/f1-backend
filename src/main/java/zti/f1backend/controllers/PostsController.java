@@ -48,17 +48,18 @@ public class PostsController {
 
     @PostMapping()
     public ResponseEntity<GeneralizedResponse> addPost(@Valid @RequestBody PostCreateDTO postDto) {
-        Optional<User> user = userRepository.findById(postDto.getUserId());
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        UserDetails userDetails = (UserDetails) securityContext.getAuthentication().getPrincipal();
+        User user = userRepository.findByEmail(userDetails.getUsername());
 
-        if (!user.isPresent()) {
+        if (user == null) {
             return new ResponseEntity<>(new GeneralizedResponse("Cannot create new post"), HttpStatus.BAD_REQUEST);
         }
-        User existingUser = user.get();
         Post post = new Post();
         post.setContent(postDto.getContent());
         post.setPhoto(postDto.getPhoto());
         post.setTitle(postDto.getTitle());
-        post.setUser(existingUser);
+        post.setUser(user);
         postsRepository.save(post);
 
         return new ResponseEntity<>(new GeneralizedResponse("New post created"), HttpStatus.CREATED);

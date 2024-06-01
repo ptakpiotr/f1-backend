@@ -20,7 +20,7 @@ import zti.f1backend.util.PasswordEncoder;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    private static final String[] WHITELIST_URLS = { "/api/auth/login", "/api/auth/register" };
+    private static final String[] WHITELIST_URLS = { "/api/auth/login", "/api/auth/register", "/api/posts" };
 
     private final UserDetailsServiceImpl userDetailsService;
     private final Environment env;
