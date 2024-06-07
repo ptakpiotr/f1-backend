@@ -1,5 +1,6 @@
 package zti.f1backend.controllers;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -22,6 +23,7 @@ import zti.f1backend.models.dto.ChangedScoreDTO;
 import zti.f1backend.models.dto.CommentCreateDTO;
 import zti.f1backend.models.dto.CommentDeleteDTO;
 import zti.f1backend.models.dto.CommentDeletedDTO;
+import zti.f1backend.models.dto.GetCommentsDTO;
 
 @Controller
 public class WSController {
@@ -55,7 +57,18 @@ public class WSController {
         newComment.setRaceId(comment.getRaceId());
         newComment.setUser(exisitingUser);
 
+        commentsRepository.save(newComment);
         return newComment;
+    }
+
+    @MessageMapping("/getComments")
+    @SendTo("/topic/allcomments")
+    public List<Comments> getComments(GetCommentsDTO commentsDTO) {
+        List<Comments> comments = commentsRepository.findAll();
+        List<Comments> filteredComments = comments.stream().filter(c -> c.getRaceId().equals(commentsDTO.getRaceId()))
+                .toList();
+
+        return filteredComments;
     }
 
     @MessageMapping("/deletecomment")
@@ -72,17 +85,24 @@ public class WSController {
     @MessageMapping("/score")
     @SendTo("/topic/scorechanged")
     public ChangedScoreDTO changeScore(@Valid ChangeScoreDTO changeScore) {
-        int changeScoreId = changeScore.getId();
+        Optional<RaceScore> raceScoreValue = raceScoreRepository.findAll().stream().filter(
+                s -> s.getRaceId().equals(changeScore.getRaceId()) && s.getUser().getId() == changeScore.getUserId())
+                .findFirst();
 
+        int changeScoreId = raceScoreValue.isPresent() ? raceScoreValue.get().getId() : -1;
         if (changeScoreId > 0) {
             Optional<RaceScore> raceScore = raceScoreRepository.findById(changeScoreId);
 
             if (raceScore.isPresent()) {
                 var raceScoreToModify = raceScore.get();
 
-                raceScoreToModify.setRating(changeScore.getRating());
+                if (changeScore.getRating() > 0) {
+                    raceScoreToModify.setRating(changeScore.getRating());
 
-                raceScoreRepository.save(raceScoreToModify);
+                    raceScoreRepository.save(raceScoreToModify);
+                }
+
+                return new ChangedScoreDTO(raceScoreToModify.getId(), raceScoreToModify.getRating());
             }
         } else {
             RaceScore raceScore = new RaceScore();
@@ -91,6 +111,8 @@ public class WSController {
             raceScore.setRaceId(changeScore.getRaceId());
             raceScore.setRating(changeScore.getRating());
             raceScore.setUser(user.get());
+
+            raceScoreRepository.save(raceScore);
         }
 
         return new ChangedScoreDTO(changeScore.getId(), changeScore.getRating());

@@ -14,10 +14,9 @@ public class ChangeScoreDTO {
     @NotBlank
     private String raceId;
 
-    @Min(1)
+    @Min(-1)
     @Max(5)
     private int rating;
 
-    @NotBlank
     private int userId;
 }
